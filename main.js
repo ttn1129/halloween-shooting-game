@@ -77,6 +77,9 @@ class Ghost extends GameContent {
     this.element.style.fontSize = `${GHOST.SIZE}px`;
     this.element.textContent = "👻";
   }
+  getHitScore() {
+    return this.power;
+  }
   hit() {
     this.power--;
     if (this.power < 0) {
@@ -268,8 +271,8 @@ function App() {
           const dy = ghost.y - bullet.y;
           const diff = ((GHOST.SIZE + BULLET.SIZE) / 2) * 0.8;
           if (dx ** 2 + dy ** 2 < diff ** 2) {
+            score += 10 * Math.trunc(ghost.getHitScore());
             ghost.hit();
-            score += 10;
             bullet.remove();
           }
         }
