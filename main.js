@@ -82,7 +82,7 @@ class Ghost extends GameContent {
     if (this.power < 0) {
       this.remove();
     } else {
-      this.element.style.filter = "brightness(100)";
+      this.element.style.filter = `brightness(${this.power > 2 ? 50 : 100})`;
     }
   }
 }
