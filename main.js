@@ -3,7 +3,8 @@ const DISPLAY = {
   HEIGHT: 480
 };
 const PLAYER = {
-  SIZE: DISPLAY.WIDTH / 10
+  SIZE: DISPLAY.WIDTH / 10,
+  POWER: 5
 };
 const BULLET = {
   SIZE: DISPLAY.WIDTH / 40,
@@ -94,6 +95,8 @@ function App() {
   let scoreElement = null;
   let restartButtonElement = null;
   let playerElement = null;
+  let playerPower = 0;
+  let playerPowerDisplayElement = null;
   let playerX = DISPLAY.WIDTH / 2;
   let playerY = DISPLAY.HEIGHT / 2;
 
@@ -114,14 +117,6 @@ function App() {
     scoreElement = document.createElement("div");
     document.body.appendChild(scoreElement);
 
-    // restartButtonElement
-    restartButtonElement = document.createElement("button");
-    restartButtonElement.textContent = "restart";
-    restartButtonElement.onclick = (e) => {
-      window.location.reload();
-    };
-    document.body.appendChild(restartButtonElement);
-
     // playerElement
     playerElement = document.createElement("div");
     playerElement.style.position = "absolute";
@@ -133,6 +128,22 @@ function App() {
     playerElement.style.fontSize = `${PLAYER.SIZE}px`;
     playerElement.textContent = "🎃";
     displayElement.appendChild(playerElement);
+
+    // playerPowerDisplayElement
+    playerPower = PLAYER.POWER;
+    playerPowerDisplayElement = document.createElement("div");
+    playerPowerDisplayElement.style.display = "flex";
+    playerPowerDisplayElement.style.margin = "8px";
+    document.body.appendChild(playerPowerDisplayElement);
+
+    // restartButtonElement
+    restartButtonElement = document.createElement("button");
+    restartButtonElement.textContent = "restart";
+    restartButtonElement.onclick = restartButtonElement.ontouchend = (e) => {
+      window.location.reload();
+    };
+    document.body.appendChild(restartButtonElement);
+
     _this.update();
 
     {
@@ -140,18 +151,20 @@ function App() {
       let originalY = -1;
       let originalPlayerX = -1;
       let originalPlayerY = -1;
-      document.onpointerdown = (e) => {
+      const ontouchstart = (e) => {
         e.preventDefault();
-        originalX = e.pageX;
-        originalY = e.pageY;
+        originalX = e.touches ? e.touches[0].pageX : e.pageX;
+        originalY = e.touches ? e.touches[0].pageY : e.pageY;
         originalPlayerX = playerX;
         originalPlayerY = playerY;
       };
-      document.onpointermove = (e) => {
+      document.ontouchstart = ontouchstart;
+      document.onpointerdown = ontouchstart;
+      const ontouchmove = (e) => {
         e.preventDefault();
         if (originalX !== -1) {
-          const dx = e.pageX - originalX;
-          const dy = e.pageY - originalY;
+          const dx = (e.touches ? e.touches[0].pageX : e.pageX) - originalX;
+          const dy = (e.touches ? e.touches[0].pageY : e.pageY) - originalY;
           playerX = originalPlayerX + dx;
           playerY = originalPlayerY + dy;
           playerX = Math.min(
@@ -165,16 +178,38 @@ function App() {
           _this.update();
         }
       };
-      document.onpointerup = (e) => {
+      document.onpointermove = ontouchmove;
+      document.ontouchmove = ontouchmove;
+
+      const ontouchend = (e) => {
         e.preventDefault();
         originalX = -1;
       };
+      document.onpointerup = ontouchend;
+      document.ontouchend = ontouchend;
+      document.ontouchcancel = ontouchend;
     }
   };
 
   _this.update = () => {
     playerElement.style.left = `${playerX - PLAYER.SIZE / 2}px`;
     playerElement.style.top = `${playerY - PLAYER.SIZE / 2}px`;
+
+    while (playerPowerDisplayElement.lastElementChild) {
+      playerPowerDisplayElement.removeChild(
+        playerPowerDisplayElement.lastElementChild
+      );
+    }
+
+    for (let i = 0; i < playerPower; i++) {
+      // playerPowerSignElement
+      const playerPowerSignElement = document.createElement("div");
+      playerPowerSignElement.style.width = `${(PLAYER.SIZE * 2) / 3}px`;
+      playerPowerSignElement.style.height = `${(PLAYER.SIZE * 2) / 3}px`;
+      playerPowerSignElement.style.fontSize = `${(PLAYER.SIZE * 2) / 3}px`;
+      playerPowerSignElement.textContent = "🎃";
+      playerPowerDisplayElement.appendChild(playerPowerSignElement);
+    }
   };
 
   _this.start = async () => {
@@ -243,10 +278,17 @@ function App() {
         const dy = ghost.y - playerY;
         const diff = ((GHOST.SIZE + PLAYER.SIZE) / 2) * 0.6;
         if (dx ** 2 + dy ** 2 < diff ** 2) {
-          _this.stop();
-          return;
+          playerHit();
         }
       }
+    }
+  };
+
+  const playerHit = () => {
+    playerPower--;
+    _this.update();
+    if (playerPower <= 0) {
+      _this.stop();
     }
   };
 
