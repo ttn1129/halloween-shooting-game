@@ -52,8 +52,8 @@ class GameContent {
       this.y < -this.size ||
       this.y > DISPLAY.HEIGHT + this.size
     ) {
-      return false;
       this.remove();
+      return false;
     }
     return true;
   }
