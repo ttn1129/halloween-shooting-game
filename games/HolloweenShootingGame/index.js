@@ -49,16 +49,27 @@ function HalloweenShootingGame() {
       this.element.style.borderRadius = "50%";
     }
   }
+  class Heart extends GameContent {
+    constructor(x, y, angle, speed, container) {
+      super(x, y, CHARACTER.SIZE, angle, speed, container);
+      this.element.style.display = "flex";
+      this.element.style.justifyContent = "center";
+      this.element.style.alignItems = "center";
+      this.element.style.fontSize = `${CHARACTER.SIZE}px`;
+      this.element.textContent = "💝";
+    }
+  }
+
   class Ghost extends GameContent {
     constructor(x, y, angle, speed, container) {
-      super(x, y, GHOST.SIZE, angle, speed, container);
+      super(x, y, CHARACTER.SIZE, angle, speed, container);
 
       this.power = Math.random() * 5;
 
       this.element.style.display = "flex";
       this.element.style.justifyContent = "center";
       this.element.style.alignItems = "center";
-      this.element.style.fontSize = `${GHOST.SIZE}px`;
+      this.element.style.fontSize = `${CHARACTER.SIZE}px`;
       this.element.textContent = "👻";
     }
     getHitScore() {
@@ -87,7 +98,7 @@ function HalloweenShootingGame() {
   let playerY = DISPLAY.HEIGHT / 2;
 
   let bulletList = [];
-  let ghostList = [];
+  let attackerList = [];
   const clearContainer = (container) => {
     container.textContent = null;
     while (container.lastElementChild) {
@@ -267,37 +278,60 @@ function HalloweenShootingGame() {
         const gx = Math.random() * DISPLAY.WIDTH;
         const gy = Math.random() > 0.5 ? 0 : DISPLAY.HEIGHT;
         const angle = Math.atan2(playerY - gy, playerX - gx);
-        const speed = GHOST.SPEED;
-        ghostList.push(new Ghost(gx, gy, angle, speed, displayElement));
+        const speed = CHARACTER.SPEED;
+        const attacker =
+          Math.random() * 1000 >= 990
+            ? new Heart(gx, gy, angle, speed, displayElement)
+            : new Ghost(gx, gy, angle, speed, displayElement);
+        attackerList.push(attacker);
       }
       ghostInterval--;
       for (let bullet of bulletList) {
         bullet.update();
       }
-      for (let ghost of ghostList) {
+      for (let ghost of attackerList) {
         ghost.update();
       }
 
       bulletList = bulletList.filter((v) => v.isAvailable());
-      ghostList = ghostList.filter((v) => v.isAvailable());
+      attackerList = attackerList.filter((v) => v.isAvailable());
 
-      for (const ghost of ghostList) {
+      for (const ghost of attackerList) {
         for (const bullet of bulletList) {
           const dx = ghost.x - bullet.x;
           const dy = ghost.y - bullet.y;
-          const diff = ((GHOST.SIZE + BULLET.SIZE) / 2) * 0.8;
+          const diff = ((CHARACTER.SIZE + BULLET.SIZE) / 2) * 0.8;
           if (dx ** 2 + dy ** 2 < diff ** 2) {
-            score += 10 * Math.trunc(ghost.getHitScore());
-            ghost.hit();
-            bullet.remove();
+            const typeofCharacter = ghost.constructor.name;
+            switch (typeofCharacter) {
+              case "Heart":
+                playerPower++;
+                ghost.remove();
+                bullet.remove();
+                break;
+              default:
+                score += 10 * Math.trunc(ghost.getHitScore());
+                ghost.hit();
+                bullet.remove();
+            }
+            break;
           }
         }
         if (!ghost.removed) continue;
         const dx = ghost.x - playerX;
         const dy = ghost.y - playerY;
-        const diff = ((GHOST.SIZE + PLAYER.SIZE) / 2) * 0.6;
+        const diff = ((CHARACTER.SIZE + PLAYER.SIZE) / 2) * 0.6;
         if (dx ** 2 + dy ** 2 < diff ** 2) {
-          playerHit();
+          const typeofCharacter = ghost.constructor.name;
+          switch (typeofCharacter) {
+            case "Ghost":
+            case "Heart":
+              playerHit();
+              break;
+            default:
+              playerHit();
+              break;
+          }
         }
       }
     }

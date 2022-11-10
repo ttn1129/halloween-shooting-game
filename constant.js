@@ -11,7 +11,7 @@ const BULLET = {
   SIZE: DISPLAY.WIDTH / 40,
   SPEED: 15
 };
-const GHOST = {
+const CHARACTER = {
   SIZE: DISPLAY.WIDTH / 10,
   SPEED: 4
 };
